@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iPhone Call Simulator - Spam Detector</title>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+/* iPhone Frame */
+.iphone {
+  width: 375px;
+  height: 812px;
+  background: #000;
+  border-radius: 40px;
+  padding: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  position: relative;
+  overflow: hidden;
+}
+
+.notch {
+  width: 200px;
+  height: 30px;
+  background: #000;
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 0 0 20px 20px;
+  z-index: 100;
+}
+
+.screen {
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  border-radius: 30px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Upload Screen */
+.upload-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 40px 20px;
+  background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.upload-icon {
+  width: 120px;
+  height: 120px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 30px;
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+}
+
+.upload-icon svg {
+  width: 60px;
+  height: 60px;
+  fill: white;
+}
+
+.upload-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 10px;
+}
+
+.upload-subtitle {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.file-input-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 280px;
+}
+
+.file-input {
+  display: none;
+}
+
+.file-label {
+  display: block;
+  padding: 16px 32px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px;
+  text-align: center;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 16px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.file-label:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+}
+
+.file-name {
+  margin-top: 15px;
+  font-size: 13px;
+  color: #666;
+  text-align: center;
+  padding: 0 10px;
+}
+
+.simulate-btn {
+  margin-top: 20px;
+  padding: 16px 32px;
+  background: #34c759;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  display: none;
+  transition: transform 0.2s;
+}
+
+.simulate-btn:hover {
+  transform: translateY(-2px);
+}
+
+/* Incoming Call Screen */
+.call-screen {
+  display: none;
+  height: 100%;
+  background: linear-gradient(180deg, #1a1a1a 0%, #2d2d2d 100%);
+  color: white;
+  position: relative;
+  animation: slideUp 0.5s ease-out;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.spam-banner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(90deg, #ff3b30 0%, #ff6b6b 100%);
+  padding: 15px;
+  text-align: center;
+  z-index: 10;
+  animation: pulse 2s infinite;
+  display: none;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.spam-banner.show {
+  display: block;
+}
+
+.spam-text {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.warning-icon {
+  font-size: 20px;
+  animation: shake 0.5s infinite;
+}
+
+@keyframes shake {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-5deg); }
+  75% { transform: rotate(5deg); }
+}
+
+.call-header {
+  padding: 60px 20px 20px;
+  text-align: center;
+}
+
+.call-status {
+  font-size: 14px;
+  color: #8e8e93;
+  margin-bottom: 10px;
+  animation: blink 1.5s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.caller-info {
+  margin-top: 20px;
+}
+
+.caller-name {
+  font-size: 32px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.caller-number {
+  font-size: 18px;
+  color: #8e8e93;
+}
+
+.caller-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 40px auto;
+  font-size: 48px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+}
+
+.call-actions {
+  position: absolute;
+  bottom: 80px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-around;
+  padding: 0 40px;
+}
+
+.call-btn {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 11px;
+  color: white;
+  transition: transform 0.2s;
+}
+
+.call-btn:active {
+  transform: scale(0.95);
+}
+
+.reject-btn {
+  background: #ff3b30;
+}
+
+.accept-btn {
+  background: #34c759;
+}
+
+.btn-icon {
+  font-size: 28px;
+}
+
+/* Active Call Screen */
+.active-call-screen {
+  display: none;
+  height: 100%;
+  background: linear-gradient(180deg, #1a1a1a 0%, #2d2d2d 100%);
+  color: white;
+  position: relative;
+}
+
+.recording-indicator {
+  position: absolute;
+  top: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 59, 48, 0.9);
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rec-dot {
+  width: 8px;
+  height: 8px;
+  background: white;
+  border-radius: 50%;
+  animation: blink 1s infinite;
+}
+
+.call-timer {
+  text-align: center;
+  margin-top: 100px;
+  font-size: 40px;
+  font-weight: 300;
+}
+
+.spam-warning-popup {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 59, 48, 0.95);
+  padding: 30px;
+  border-radius: 20px;
+  text-align: center;
+  max-width: 280px;
+  display: none;
+  animation: popIn 0.3s ease-out;
+}
+
+@keyframes popIn {
+  from { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+  to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+.spam-warning-popup.show {
+  display: block;
+}
+
+.warning-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 15px;
+}
+
+.warning-message {
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.end-call-btn {
+  width: 100%;
+  padding: 14px;
+  background: white;
+  color: #ff3b30;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.active-call-actions {
+  position: absolute;
+  bottom: 80px;
+  left: 0;
+  right: 0;
+  text-align: center;
+}
+
+.end-call-main {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: #ff3b30;
+  border: none;
+  color: white;
+  font-size: 28px;
+  cursor: pointer;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Results Screen */
+.results-screen {
+  display: none;
+  height: 100%;
+  background: #fff;
+  overflow-y: auto;
+  animation: slideUp 0.5s ease-out;
+}
+
+.results-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 60px 20px 30px;
+  text-align: center;
+  color: white;
+}
+
+.results-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.results-subtitle {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.results-content {
+  padding: 20px;
+}
+
+.result-card {
+  background: #f8f9fa;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 15px;
+}
+
+.result-label {
+  font-size: 12px;
+  color: #666;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.result-value {
+  font-size: 18px;
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.spam-badge {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 700;
+  margin-top: 5px;
+}
+
+.spam-badge.spam {
+  background: #ffebee;
+  color: #ff3b30;
+}
+
+.spam-badge.safe {
+  background: #e8f5e9;
+  color: #34c759;
+}
+
+.risk-meter {
+  height: 8px;
+  background: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+.risk-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #34c759 0%, #ff9500 50%, #ff3b30 100%);
+  transition: width 1s ease-out;
+}
+
+.transcription-box {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  padding: 15px;
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #495057;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.action-btn {
+  flex: 1;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.action-btn:active {
+  transform: scale(0.98);
+}
+
+.primary-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.secondary-btn {
+  background: #f8f9fa;
+  color: #495057;
+  border: 2px solid #dee2e6;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-message {
+  background: #ffebee;
+  color: #c62828;
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 15px;
+  font-size: 14px;
+  text-align: center;
+}
+</style>
+</head>
+<body>
+
+<div class="iphone">
+  <div class="notch"></div>
+  <div class="screen">
+    
+    <!-- Upload Screen -->
+    <div class="upload-screen" id="uploadScreen">
+      <div class="upload-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/>
+        </svg>
+      </div>
+      <h1 class="upload-title">Upload Call Audio</h1>
+      <p class="upload-subtitle">Select an audio file to simulate an incoming call</p>
+      
+      <div class="file-input-wrapper">
+        <input type="file" id="audioFile" class="file-input" accept="audio/*">
+        <label for="audioFile" class="file-label">Choose Audio File</label>
+        <div class="file-name" id="fileName">No file selected</div>
+      </div>
+      
+      <button class="simulate-btn" id="simulateBtn">Start Call Simulation</button>
+      <div id="uploadError" class="error-message" style="display:none;"></div>
+    </div>
+
+    <!-- Incoming Call Screen -->
+    <div class="call-screen" id="callScreen">
+      <div class="spam-banner" id="spamBanner">
+        <div class="spam-text">
+          <span class="warning-icon">⚠️</span>
+          <span>POTENTIAL SPAM CALL</span>
+          <span class="warning-icon">⚠️</span>
+        </div>
+      </div>
+      
+      <div class="call-header">
+        <div class="call-status">incoming call...</div>
+        <div class="caller-info">
+          <div class="caller-avatar">📞</div>
+          <div class="caller-name" id="callerName">Unknown Caller</div>
+          <div class="caller-number" id="callerNumber">+1 (800) XXX-XXXX</div>
+        </div>
+      </div>
+      
+      <div class="call-actions">
+        <button class="call-btn reject-btn" onclick="rejectCall()">
+          <span class="btn-icon">✕</span>
+          <span>Decline</span>
+        </button>
+        <button class="call-btn accept-btn" onclick="acceptCall()">
+          <span class="btn-icon">✓</span>
+          <span>Accept</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Active Call Screen -->
+    <div class="active-call-screen" id="activeCallScreen">
+      <div class="recording-indicator">
+        <span class="rec-dot"></span>
+        <span>Recording & Analyzing</span>
+      </div>
+      
+      <div class="call-timer" id="callTimer">00:00</div>
+      
+      <div class="spam-warning-popup" id="spamWarning">
+        <div class="warning-title">⚠️ SPAM DETECTED</div>
+        <div class="warning-message">
+          This call has been identified as spam. Do not share personal information, passwords, or financial details.
+        </div>
+        <button class="end-call-btn" onclick="endCall()">End Call Now</button>
+      </div>
+      
+      <div class="active-call-actions">
+        <button class="end-call-main" onclick="endCall()">
+          ✕
+        </button>
+      </div>
+      
+      <audio id="audioPlayer" style="display:none;"></audio>
+    </div>
+
+    <!-- Results Screen -->
+    <div class="results-screen" id="resultsScreen">
+      <div class="results-header">
+        <h2 class="results-title">Call Analysis Complete</h2>
+        <p class="results-subtitle">Detailed spam detection results</p>
+      </div>
+      
+      <div class="results-content">
+        <div class="loading" id="loadingResults">
+          <div class="spinner"></div>
+          <p>Analyzing call data...</p>
+        </div>
+        
+        <div id="resultsData" style="display:none;">
+          <div class="result-card">
+            <div class="result-label">Call Classification</div>
+            <div class="result-value">
+              <span id="spamStatus">Processing...</span>
+              <div class="spam-badge" id="spamBadge">Checking...</div>
+            </div>
+          </div>
+          
+          <div class="result-card">
+            <div class="result-label">Risk Score</div>
+            <div class="result-value" id="riskScore">0%</div>
+            <div class="risk-meter">
+              <div class="risk-fill" id="riskFill" style="width: 0%"></div>
+            </div>
+          </div>
+          
+          <div class="result-card">
+            <div class="result-label">Confidence Level</div>
+            <div class="result-value" id="confidence">0%</div>
+          </div>
+          
+          <div class="result-card">
+            <div class="result-label">Recommended Action</div>
+            <div class="result-value" id="action">ANALYZING</div>
+          </div>
+          
+          <div class="result-card">
+            <div class="result-label">Call Transcription</div>
+            <div class="transcription-box" id="transcription">
+              Transcribing audio...
+            </div>
+          </div>
+          
+          <div class="action-buttons">
+            <button class="action-btn secondary-btn" onclick="reportSpam()">
+              Report as Spam
+            </button>
+            <button class="action-btn primary-btn" onclick="resetSimulator()">
+              New Simulation
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let selectedFile = null;
+let callTimer = null;
+let callDuration = 0;
+let audioElement = null;
+let analysisData = null;
+
+const API_BASE_URL = 'http://127.0.0.1:8000';
+
+// File selection
+document.getElementById('audioFile').addEventListener('change', function(e) {
+  selectedFile = e.target.files[0];
+  if (selectedFile) {
+    document.getElementById('fileName').textContent = selectedFile.name;
+    document.getElementById('simulateBtn').style.display = 'block';
+    document.getElementById('uploadError').style.display = 'none';
+  }
+});
+
+// Start simulation
+document.getElementById('simulateBtn').addEventListener('click', async function() {
+  if (!selectedFile) {
+    showError('Please select an audio file first');
+    return;
+  }
+  
+  // Show loading state
+  this.disabled = true;
+  this.textContent = 'Processing...';
+  
+  const formData = new FormData();
+  formData.append('file', selectedFile);
+  
+  try {
+    // Pre-analyze the audio file
+    const response = await fetch(`${API_BASE_URL}/analyze-audio`, {
+      method: 'POST',
+      body: formData
+    });
+    
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status}`);
+    }
+    
+    analysisData = await response.json();
+    
+    // Show incoming call screen
+    document.getElementById('uploadScreen').style.display = 'none';
+    document.getElementById('callScreen').style.display = 'block';
+    
+    // If spam detected, show warning banner
+    if (analysisData.is_spam) {
+      setTimeout(() => {
+        document.getElementById('spamBanner').classList.add('show');
+      }, 500);
+    }
+    
+  } catch (error) {
+    console.error('Error:', error);
+    showError('Failed to analyze audio. Make sure the API server is running on port 8000.');
+    this.disabled = false;
+    this.textContent = 'Start Call Simulation';
+  }
+});
+
+function showError(message) {
+  const errorDiv = document.getElementById('uploadError');
+  errorDiv.textContent = message;
+  errorDiv.style.display = 'block';
+}
+
+function rejectCall() {
+  alert('Call Rejected');
+  resetSimulator();
+}
+
+function acceptCall() {
+  // Switch to active call screen
+  document.getElementById('callScreen').style.display = 'none';
+  document.getElementById('activeCallScreen').style.display = 'block';
+  
+  // Play audio
+  audioElement = document.getElementById('audioPlayer');
+  const url = URL.createObjectURL(selectedFile);
+  audioElement.src = url;
+  audioElement.play();
+  
+  // Start timer
+  startCallTimer();
+  
+  // Show spam warning during call if spam detected
+  if (analysisData && analysisData.is_spam) {
+    setTimeout(() => {
+      document.getElementById('spamWarning').classList.add('show');
+    }, 3000);
+  }
+  
+  // Auto end call when audio finishes
+  audioElement.addEventListener('ended', () => {
+    endCall();
+  });
+}
+
+function startCallTimer() {
+  callDuration = 0;
+  callTimer = setInterval(() => {
+    callDuration++;
+    const minutes = Math.floor(callDuration / 60);
+    const seconds = callDuration % 60;
+    document.getElementById('callTimer').textContent = 
+      `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  }, 1000);
+}
+
+function endCall() {
+  // Stop timer
+  if (callTimer) {
+    clearInterval(callTimer);
+  }
+  
+  // Stop audio
+  if (audioElement) {
+    audioElement.pause();
+  }
+  
+  // Show results screen
+  document.getElementById('activeCallScreen').style.display = 'none';
+  document.getElementById('resultsScreen').style.display = 'block';
+  
+  // Display the analysis results
+  displayResults(analysisData);
+}
+
+function displayResults(data) {
+  if (!data) {
+    document.getElementById('loadingResults').innerHTML = 
+      '<p style="color: #c62828;">Failed to load analysis results</p>';
+    return;
+  }
+  
+  document.getElementById('loadingResults').style.display = 'none';
+  document.getElementById('resultsData').style.display = 'block';
+  
+  // Spam status
+  const isSpam = data.is_spam;
+  document.getElementById('spamStatus').textContent = isSpam ? 'SPAM CALL' : 'LEGITIMATE CALL';
+  
+  const badge = document.getElementById('spamBadge');
+  badge.textContent = isSpam ? '🚫 Spam' : '✓ Safe';
+  badge.className = 'spam-badge ' + (isSpam ? 'spam' : 'safe');
+  
+  // Risk score
+  const riskScore = data.risk_score || Math.floor(data.confidence * 100);
+  document.getElementById('riskScore').textContent = riskScore + '%';
+  setTimeout(() => {
+    document.getElementById('riskFill').style.width = riskScore + '%';
+  }, 100);
+  
+  // Confidence
+  const confidence = Math.floor((data.confidence || 0.85) * 100);
+  document.getElementById('confidence').textContent = confidence + '%';
+  
+  // Action
+  document.getElementById('action').textContent = data.action || 'BLOCK';
+  
+  // Transcription
+  document.getElementById('transcription').textContent = 
+    data.transcription || 'Audio transcription not available. Analysis based on audio patterns.';
+}
+
+async function reportSpam() {
+  if (!analysisData) {
+    alert('No call data to report');
+    return;
+  }
+  
+  try {
+    const response = await fetch(`${API_BASE_URL}/report-call`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        phone_number: '+1-800-XXX-XXXX',
+        is_spam: true,
+        transcription: analysisData.transcription || ''
+      })
+    });
+    
+    if (response.ok) {
+      alert('Thank you! This number has been reported as spam.');
+    } else {
+      alert('Failed to report spam. Please try again.');
+    }
+  } catch (error) {
+    console.error('Error reporting spam:', error);
+    alert('Failed to report spam. Make sure the API server is running.');
+  }
+}
+
+function resetSimulator() {
+  // Reset all screens
+  document.getElementById('resultsScreen').style.display = 'none';
+  document.getElementById('activeCallScreen').style.display = 'none';
+  document.getElementById('callScreen').style.display = 'none';
+  document.getElementById('uploadScreen').style.display = 'flex';
+  
+  // Reset form
+  document.getElementById('audioFile').value = '';
+  document.getElementById('fileName').textContent = 'No file selected';
+  const simulateBtn = document.getElementById('simulateBtn');
+  simulateBtn.style.display = 'none';
+  simulateBtn.disabled = false;
+  simulateBtn.textContent = 'Start Call Simulation';
+  document.getElementById('spamBanner').classList.remove('show');
+  document.getElementById('spamWarning').classList.remove('show');
+  document.getElementById('uploadError').style.display = 'none';
+  
+  selectedFile = null;
+  analysisData = null;
+  callDuration = 0;
+  
+  if (callTimer) {
+    clearInterval(callTimer);
+  }
+  
+  if (audioElement) {
+    audioElement.pause();
+    audioElement.src = '';
+  }
+}
+</script>
+
+</body>
+</html>
